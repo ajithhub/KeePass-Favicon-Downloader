@@ -31,7 +31,6 @@ using System.Net;
 using System.Drawing;
 using System.Text.RegularExpressions;
 
-
 using KeePass.Plugins;
 using KeePass.Forms;
 using KeePass.Resources;
@@ -288,7 +287,20 @@ namespace KeePassFaviconDownloader
             }
 
         }
-
+        /// <summary>
+        /// A convenience method to combine a relative URL to it's base URI.  The
+        /// added functionality is that if the newUri happens to be a full URL
+        /// itself, then will just return that as a Uri.  When we parsee a link
+        /// an we don't yet know if it is relative or absolute, we can just use
+        /// this method to get the next URI we care about.
+        /// </summary>
+        /// <param name="baseUri">A Uri object that represents the base url that
+        /// your relative 
+        /// url would be based on</param>
+        /// <param name="newUri">This is typically a relative URL.  If it happens
+        /// to be a full URL
+        /// then a new Uri will be returned that represents this URL only</param>
+        /// <returns></returns>
         private Uri reconcileURI(Uri baseUri, string newUri) {
             Uri reconciledUri = null;
 
@@ -297,7 +309,8 @@ namespace KeePassFaviconDownloader
                 return baseUri;
             }
 
-            // If the newURI is a full URI, then return that, otherwise we'll get a UriFormatException
+            // If the newURI is a full URI, then return that, otherwise we'll get
+            // a UriFormatException
             try {
                 reconciledUri = new Uri(newUri);
                 return reconciledUri;
@@ -309,7 +322,18 @@ namespace KeePassFaviconDownloader
 
             return reconciledUri;
         }
-
+        /// <summary>
+        /// Some ancient pages may use a "meta" tag in the header to control a
+        /// redirect to another location.  This method will parse the supplied
+        /// document and identify such a link.  A Uri object is required to that
+        /// an absolute uri can be reconciled if the location of the meta tag
+        /// is a relative link.
+        /// </summary>
+        /// <param name="uri">The Uri object from which this content was fetched
+        /// </param>
+        /// <param name="hdoc">The content to be examined</param>
+        /// <returns>A new Uri of the redirect, or null if there was no redirection
+        /// </returns>
         private Uri getMeataRefreshLink(Uri uri, HtmlAgilityPack.HtmlDocument hdoc) {
             HtmlNodeCollection metas = hdoc.DocumentNode.SelectNodes("/html/head/meta");
             string redirect = null;
@@ -323,12 +347,16 @@ namespace KeePassFaviconDownloader
                 try {
                     HtmlAttribute httpeq = node.Attributes["http-equiv"];
                     HtmlAttribute content = node.Attributes["content"];
-                    if (httpeq.Value.ToLower().Equals("location") || httpeq.Value.ToLower().Equals("refresh")) {
+                    if (httpeq.Value.ToLower().Equals("location") || 
+                        httpeq.Value.ToLower().Equals("refresh")) {
+
                         if (content.Value.ToLower().Contains("url")) {
-                            Match match = Regex.Match(content.Value.ToLower(), @".*?url[\s=]*(\S+)");
+                            Match match = Regex.Match(content.Value.ToLower(),
+                                                      @".*?url[\s=]*(\S+)");
                             if (match.Success) {
                                 redirect = match.Captures[0].ToString();
                                 redirect = match.Groups[1].ToString();
+                                break;
                             }
                         }
 
