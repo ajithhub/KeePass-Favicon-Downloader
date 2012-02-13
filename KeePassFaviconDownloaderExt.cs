@@ -29,6 +29,8 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Net;
 using System.Drawing;
+using System.Text.RegularExpressions;
+
 
 using KeePass.Plugins;
 using KeePass.Forms;
@@ -287,6 +289,62 @@ namespace KeePassFaviconDownloader
 
         }
 
+        private Uri reconcileURI(Uri baseUri, string newUri) {
+            Uri reconciledUri = null;
+
+            // If there is nothing new, then return the original Uri
+            if (String.IsNullOrEmpty(newUri)) {
+                return baseUri;
+            }
+
+            // If the newURI is a full URI, then return that, otherwise we'll get a UriFormatException
+            try {
+                reconciledUri = new Uri(newUri);
+                return reconciledUri;
+            } catch (Exception) { }
+
+            //if (newUri.StartsWith("/")) {
+            reconciledUri = new Uri(baseUri, newUri);
+            //}
+
+            return reconciledUri;
+        }
+
+        private Uri getMeataRefreshLink(Uri uri, HtmlAgilityPack.HtmlDocument hdoc) {
+            HtmlNodeCollection metas = hdoc.DocumentNode.SelectNodes("/html/head/meta");
+            string redirect = null;
+
+            if (metas == null) {
+                return null;
+            }
+
+            for (int i = 0; i < metas.Count; i++) {
+                HtmlNode node = metas[i];
+                try {
+                    HtmlAttribute httpeq = node.Attributes["http-equiv"];
+                    HtmlAttribute content = node.Attributes["content"];
+                    if (httpeq.Value.ToLower().Equals("location") || httpeq.Value.ToLower().Equals("refresh")) {
+                        if (content.Value.ToLower().Contains("url")) {
+                            Match match = Regex.Match(content.Value.ToLower(), @".*?url[\s=]*(\S+)");
+                            if (match.Success) {
+                                redirect = match.Captures[0].ToString();
+                                redirect = match.Groups[1].ToString();
+                            }
+                        }
+
+                    }
+                } catch (Exception) { }
+            }
+
+            if (String.IsNullOrEmpty(redirect)) {
+                return null;
+            }
+
+            return reconcileURI(uri, redirect);
+        }
+
+
+
         /// <summary>
         /// Gets a memory stream representing an image from an explicit favicon location.
         /// </summary>
@@ -302,10 +360,22 @@ namespace KeePassFaviconDownloader
                         
             HtmlWeb hw = new HtmlWeb();
             HtmlAgilityPack.HtmlDocument hdoc = null;
+            Uri responseURI = null;
 
             try
             {
-                hdoc = hw.Load(fullURL);
+                Uri nextUri = new Uri(fullURL);
+                do {
+                    // HtmlWeb.Load will follow 302 and 302 redirects to alternate URIs
+                    hdoc = hw.Load(nextUri.AbsoluteUri);
+                    responseURI = hw.ResponseUri;
+
+                    // Old school meta refreshes need to parsed
+                    nextUri = getMeataRefreshLink(responseURI, hdoc);
+
+                } while (nextUri != null);
+
+
             }
             catch (Exception)
             {
@@ -348,12 +418,7 @@ namespace KeePassFaviconDownloader
             if (string.IsNullOrEmpty(faviconLocation))
                 return false;
 
-            if (!faviconLocation.StartsWith("http://") && !faviconLocation.StartsWith("https://"))
-                if(faviconLocation.StartsWith("/"))
-                    faviconLocation = "http://" + url + faviconLocation;
-                else
-                    faviconLocation = "http://" + url + "/" + faviconLocation;
-
+            faviconLocation = reconcileURI(responseURI, faviconLocation).AbsoluteUri;
             return getFavicon(faviconLocation, ref ms, ref message);
 
         }
