@@ -334,7 +334,7 @@ namespace KeePassFaviconDownloader
         /// <param name="hdoc">The content to be examined</param>
         /// <returns>A new Uri of the redirect, or null if there was no redirection
         /// </returns>
-        private Uri getMeataRefreshLink(Uri uri, HtmlAgilityPack.HtmlDocument hdoc) {
+        private Uri getMetaRefreshLink(Uri uri, HtmlAgilityPack.HtmlDocument hdoc) {
             HtmlNodeCollection metas = hdoc.DocumentNode.SelectNodes("/html/head/meta");
             string redirect = null;
 
@@ -399,7 +399,7 @@ namespace KeePassFaviconDownloader
                     responseURI = hw.ResponseUri;
 
                     // Old school meta refreshes need to parsed
-                    nextUri = getMeataRefreshLink(responseURI, hdoc);
+                    nextUri = getMetaRefreshLink(responseURI, hdoc);
 
                 } while (nextUri != null);
 
