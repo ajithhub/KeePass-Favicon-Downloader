@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General assembly properties
-[assembly: AssemblyTitle("Favicon Downloader")]
+[assembly: AssemblyTitle("Favicon Downloader - Ajith patch")]
 [assembly: AssemblyDescription("KeePass plugin that downloads and stores favicons for entries with web URLs.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Chris Tomlinson")]
@@ -40,4 +40,4 @@ using System.Runtime.InteropServices;
 
 // Assembly version information
 [assembly: AssemblyVersion("2.0.9.*")]
-[assembly: AssemblyFileVersion("1.6.0.0")]
+[assembly: AssemblyFileVersion("1.6.0.1")]

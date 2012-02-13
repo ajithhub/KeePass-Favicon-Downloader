@@ -1,5 +1,10 @@
 KeePass Favicon Downloader plugin
 =================================
+Version 1.6.0.1 Ajith path
+- Resolve urls from responseURI in case of 301/302 redirects
+- Follow meta redirects
+- Resolve relative links against responseURI
+
 
 Version 1.6.0 changes
 ---------------------
